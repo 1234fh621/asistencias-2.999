@@ -1,0 +1,191 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// PASO 3 — RENDER DE RESULTADOS
+// ═══════════════════════════════════════════════════════════════════════════
+const TL = {
+  FALTA:['tag-falta','Falta'],
+  RETARDO_MENOR:['tag-retmenor','Retardo menor'],
+  RETARDO_MAYOR:['tag-retmayor','Retardo mayor'],
+  OMISION_ENTRADA:['tag-omision','Omisión de entrada'],
+  OMISION_SALIDA:['tag-omision','Omisión de salida'],
+};
+
+function schedLabelHtml(p){
+  return p.horarioVariable
+    ? '<span style="font-size:9px;background:#e8edf2;border:1px solid #c0ccd8;border-radius:2px;padding:1px 5px;color:#1a3a6c;font-weight:700;margin-left:4px">HORARIO VARIABLE</span>'
+    : `<span style="font-size:9px;color:#888">${p.horaEntrada}–${p.horaSalida}</span>`;
+}
+
+function renderResultados(){
+  const tbody = document.getElementById('bodyResultados');
+  tbody.innerHTML = '';
+  if(!resultados.length && !sinIncidencias.length){
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;padding:18px;font-size:11px">No hay datos que mostrar.</td></tr>';
+    return;
+  }
+
+  // Docentes CON incidencias → botón Memo
+  for(const r of resultados){
+    let obs = '';
+    for(const inc of r.incidencias){
+      obs += `<div style="margin-bottom:5px"><span style="font-size:10px;font-weight:700;color:#333;margin-right:4px">${fmtDia(inc.fecha)}</span>`;
+      if(inc.bloqueLabel) obs += `<span style="font-size:9px;color:#1a3a6c;background:#dce8f5;border:1px solid #b0cce0;border-radius:2px;padding:1px 4px;margin-right:3px;font-weight:700">${inc.bloqueLabel}</span>`;
+      for(const t of inc.tipos){ const [cls,lbl]=TL[t]||['',t]; obs += `<span class="tag ${cls}">${lbl}</span>`; }
+      if(inc.esAusencia) obs += ` <span style="font-size:10px;color:#888">Sin checadas</span>`;
+      for(const c of inc.refs) obs += `<div class="chk">${c}</div>`;
+      obs += '</div>';
+    }
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.no}</td><td>${r.nombre} ${r.apellidos}<br>${schedLabelHtml(r)}</td>
+      <td><span class="pill-depto">${r.depto||'—'}</span></td>
+      <td style="max-width:360px">${obs}</td>
+      <td><button class="btn btn-word btn-sm" id="btnMemo_${r.no}" onclick="generarMemoDocx('${r.no}')">📄 Memo</button></td>`;
+    tbody.appendChild(tr);
+  }
+
+  // Docentes SIN incidencias → botón Constancia (constancia de excelencia)
+  for(const p of sinIncidencias){
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${p.no}</td><td>${p.nombre} ${p.apellidos}<br>${schedLabelHtml(p)}</td>
+      <td><span class="pill-depto">${p.depto||'—'}</span></td>
+      <td style="color:#3a5a3a;font-size:11px">✓ Sin incidencias en el periodo</td>
+      <td><button class="btn btn-word btn-sm" id="btnConst_${p.no}" onclick="generarConstanciaDocx('${p.no}')">📄 Constancia</button></td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EXPORTAR A PDF (reporte general, todos los docentes)
+// ═══════════════════════════════════════════════════════════════════════════
+const TIPO_LABELS = {
+  FALTA: 'Falta',
+  RETARDO_MENOR: 'Retardo menor',
+  RETARDO_MAYOR: 'Retardo mayor',
+  OMISION_ENTRADA: 'Omisión de entrada',
+  OMISION_SALIDA: 'Omisión de salida',
+};
+
+function buildFilasWord(){
+  const filas = [];
+  for(const r of resultados){
+    const nombre = `${r.nombre} ${r.apellidos}`.trim();
+    const horario = r.horarioVariable ? 'Variable' : `${r.horaEntrada} – ${r.horaSalida}`;
+    for(const inc of r.incidencias){
+      const fechaRef = inc.esAusencia ? fmtDia(inc.fecha) : (inc.refs[0] || fmtDia(inc.fecha));
+      const observacion = inc.tipos.map(t => TIPO_LABELS[t] || t).join(' - ').toUpperCase();
+      filas.push({ no: r.no, nombre, horario, fecha: fechaRef, observacion });
+    }
+  }
+  return filas;
+}
+
+function exportarTxt(){
+  const btn = document.getElementById('btnExportWord');
+  btn.disabled = true;
+  btn.textContent = 'Generando...';
+  try {
+    const primerProfe = resultados[0];
+    const nombrePersona = `${primerProfe.nombre} ${primerProfe.apellidos}`.trim();
+    const numero = primerProfe.no;
+
+    const filas = [];
+    for(const r of resultados){
+      for(const inc of r.incidencias){
+        const fechaRef = inc.esAusencia ? fmtDia(inc.fecha) : (inc.refs[0] || fmtDia(inc.fecha));
+        const observacion = inc.tipos.map(t => TIPO_LABELS[t] || t).join(' - ');
+        filas.push(`<tr>
+          <td>${r.no}</td>
+          <td>${r.nombre}</td>
+          <td>${r.apellidos}</td>
+          <td>${fechaRef}</td>
+          <td>${observacion}</td>
+        </tr>`);
+      }
+    }
+
+    const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<title>Asistencias ITM</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 11px; padding: 20px 30px; }
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 2px solid #1a2b3c; padding-bottom: 10px; }
+  .header img { height: 60px; object-fit: contain; }
+  .header-center { text-align: center; }
+  .header-center img { height: 55px; }
+  .header-center p { font-size: 13px; font-weight: bold; color: #1a2b3c; margin-top: 4px; }
+  .header-center small { font-size: 10px; color: #444; }
+  .presente { text-align: right; margin-bottom: 10px; font-size: 11px; }
+  .presente strong { display: block; }
+  .intro { margin-bottom: 14px; font-size: 11px; line-height: 1.6; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th { background: #1a2b3c; color: #fff; padding: 6px 8px; text-align: left; font-size: 10px; text-transform: uppercase; }
+  td { padding: 5px 8px; border: 1px solid #ccc; font-size: 11px; }
+  tr:nth-child(even) td { background: #f5f5f5; }
+  @media print { body { padding: 10px 20px; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img src="img/LOGO-VERTICAL-TECNM.png" alt="TecNM"/>
+  <div class="header-center">
+    <img src="img/SEP_Logo_2026.png" alt="SEP"/>
+  </div>
+  <img src="img/LOGO-VERTICAL-TECNM.png" alt="TecNM"/>
+</div>
+
+<div class="presente">
+  <strong>Presente</strong>
+  x ${numero}
+</div>
+
+<div class="intro">
+  <p>Por medio de la presente</p>
+  <p><strong>${nombrePersona}</strong></p>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>No.</th>
+      <th colspan="2">Nombre</th>
+      <th>Horario</th>
+      <th>Observaciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${filas.join('\n')}
+  </tbody>
+</table>
+
+</body>
+</html>`;
+
+    const ventana = window.open('', '_blank');
+    ventana.document.write(html);
+    ventana.document.close();
+    ventana.focus();
+    setTimeout(() => ventana.print(), 600);
+
+  } catch(e){
+    console.error(e);
+    alert('Error al generar el PDF: ' + e.message);
+  }
+  btn.disabled = false;
+  btn.textContent = '⬇ Exportar a PDF';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// NOTA: la función generarMemo() (memo en HTML/print, con membrete armado a
+// mano en CSS) fue reemplazada por generarMemoDocx(no), que vive en
+// js/docx-export.js y usa la plantilla real plantillas/memo_plantilla.docx.
+// Se llama automáticamente desde el botón "📄 Memo" de cada fila en la tabla
+// de resultados (ver renderResultados arriba) — ya no existe un botón único
+// "Generar memo" para el primer docente de la lista.
+//
+// Para los docentes SIN incidencias, cada fila tiene su propio botón
+// "📄 Constancia" que llama a generarConstanciaDocx(no), también en
+// js/docx-export.js, usando plantillas/constancia_plantilla.docx.
+// ═══════════════════════════════════════════════════════════════════════════
