@@ -26,27 +26,35 @@
 <div class="card">
   <div class="card-title">Ingreso de datos <span class="badge-step">Paso 1</span></div>
 
-  <!-- Periodo -->
-  <div class="periodo-row">
-    <label>Periodo de análisis:</label>
-    <span style="font-size:11px;color:#555">Inicio</span>
-    <input type="date" id="periodoInicio" value="2026-01-07"/>
-    <span style="font-size:11px;color:#555">Fin</span>
-    <input type="date" id="periodoFin" value="2026-05-21"/>
-    <span style="font-size:10px;color:#888">Define qué días hábiles sin checada = FALTA</span>
-  </div>
+  <!-- Configuración del periodo (fechas + días no laborables) -->
+  <details class="cal-details" id="calDetails" open>
+    <summary>⚙ Configuración del periodo y días no laborables <span id="periodoResumen" class="periodo-resumen"></span></summary>
 
-  <!-- Calendario festivos -->
-  <div class="notice-info">
-    <strong>📅 Días no laborables — Calendario ITM 2026</strong>
-    Sábados, domingos y los siguientes días festivos/suspensiones se excluyen automáticamente:
-    <div class="cal-grid" id="calGrid"></div>
-    <div class="custom-row">
-      <input type="text" id="newHoliday" placeholder="DD/MM/AAAA" maxlength="10" style="width:110px"/>
-      <button class="btn btn-secondary btn-sm" onclick="addHoliday()">+ Agregar día</button>
-      <span style="font-size:10px;color:#777">Suspensiones adicionales o días sin clases</span>
+    <div class="cal-details-body">
+      <!-- Periodo -->
+      <div class="periodo-row">
+        <label>Periodo de análisis (cambia aquí para cada semestre):</label>
+        <span style="font-size:11px;color:#555">Inicio</span>
+        <input type="date" id="periodoInicio" value="2026-01-07" onchange="guardarPeriodoLS()"/>
+        <span style="font-size:11px;color:#555">Fin</span>
+        <input type="date" id="periodoFin" value="2026-05-21" onchange="guardarPeriodoLS()"/>
+        <span style="font-size:10px;color:#888">Define qué días hábiles sin checada = FALTA. Sábados y domingos dentro de este rango nunca cuentan como falta.</span>
+      </div>
+
+      <!-- Calendario festivos -->
+      <div class="notice-info">
+        <strong>📅 Días festivos / suspensiones — Calendario ITM 2026</strong>
+        Sábados, domingos y los siguientes días festivos/suspensiones se excluyen automáticamente del conteo de faltas:
+        <div class="cal-grid" id="calGrid"></div>
+        <div class="custom-row">
+          <input type="text" id="newHoliday" placeholder="DD/MM/AAAA" maxlength="10" style="width:110px"/>
+          <button class="btn btn-secondary btn-sm" onclick="addHoliday()">+ Agregar día</button>
+          <button class="btn btn-secondary btn-sm" onclick="limpiarFestivosExtra()" style="color:#a03030;border-color:#c8a0a0">Limpiar personalizados</button>
+          <span style="font-size:10px;color:#777">Suspensiones adicionales o días sin clases. Se guardan automáticamente (aunque recargues o cierres la página).</span>
+        </div>
+      </div>
     </div>
-  </div>
+  </details>
 
   <!-- Asistencias -->
   <span class="field-label">Lista de asistencias (checadas del reloj)</span>
@@ -156,7 +164,7 @@ El a. m./p. m. puede venir como columna separada — se maneja automáticamente.
 <script src="js/docx-export.js"></script>
 
 <script>
-  renderCalGrid();
+  initConfigPeriodo();
 </script>
 </body>
 </html>

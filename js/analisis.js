@@ -119,7 +119,7 @@ function analizar(){
         } else {
           if(mins>10 && mins<=20){ tipos.push('RETARDO_MENOR'); refs.push(fmtFecha(bPrimera)); }
           else if(mins>20 && mins<=30){ tipos.push('RETARDO_MAYOR'); refs.push(fmtFecha(bPrimera)); }
-          else if(mins>30){ tipos.push('FALTA'); tipos.push('RETARDO_MAYOR'); refs.push(fmtFecha(bPrimera)); }
+          else if(mins>30){ tipos.push('FALTA'); refs.push(fmtFecha(bPrimera)); }
           if(!tieneSalida){
             tipos.push('OMISION_SALIDA');
             if(!refs.length) refs.push(fmtFecha(bPrimera));

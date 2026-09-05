@@ -41,6 +41,65 @@ const FESTIVOS_LABELS = {
 
 let festivosExtra = [];
 
+// ═══════════════════════════════════════════════════════════════════════════
+// PERSISTENCIA LOCAL — periodo y festivos personalizados sobreviven a
+// recargar la página o cerrar el navegador (localStorage del dispositivo).
+// ═══════════════════════════════════════════════════════════════════════════
+const LS_KEY_FESTIVOS = 'itmAsist_festivosExtra';
+const LS_KEY_PERIODO_INI = 'itmAsist_periodoInicio';
+const LS_KEY_PERIODO_FIN = 'itmAsist_periodoFin';
+
+function guardarFestivosLS(){
+  try{ localStorage.setItem(LS_KEY_FESTIVOS, JSON.stringify(festivosExtra)); }catch(e){}
+}
+
+function cargarFestivosLS(){
+  try{
+    const raw = localStorage.getItem(LS_KEY_FESTIVOS);
+    if(raw){ const arr = JSON.parse(raw); if(Array.isArray(arr)) festivosExtra = arr; }
+  }catch(e){ /* ignorar si el navegador bloquea localStorage */ }
+}
+
+function guardarPeriodoLS(){
+  try{
+    localStorage.setItem(LS_KEY_PERIODO_INI, document.getElementById('periodoInicio').value);
+    localStorage.setItem(LS_KEY_PERIODO_FIN, document.getElementById('periodoFin').value);
+  }catch(e){}
+  actualizarPeriodoResumen();
+}
+
+function cargarPeriodoLS(){
+  try{
+    const ini = localStorage.getItem(LS_KEY_PERIODO_INI);
+    const fin = localStorage.getItem(LS_KEY_PERIODO_FIN);
+    if(ini) document.getElementById('periodoInicio').value = ini;
+    if(fin) document.getElementById('periodoFin').value = fin;
+  }catch(e){}
+}
+
+function actualizarPeriodoResumen(){
+  const el = document.getElementById('periodoResumen');
+  if(!el) return;
+  const ini = document.getElementById('periodoInicio').value;
+  const fin = document.getElementById('periodoFin').value;
+  const nExtra = festivosExtra.length;
+  el.textContent = ini && fin ? `${fmtIso(ini)} → ${fmtIso(fin)}${nExtra?` · ${nExtra} día(s) personalizado(s)`:''}` : '';
+}
+
+function limpiarFestivosExtra(){
+  if(festivosExtra.length===0) return;
+  if(!confirm('¿Quitar todos los días personalizados agregados?')) return;
+  festivosExtra = [];
+  guardarFestivosLS();
+  renderCalGrid();
+}
+
+function initConfigPeriodo(){
+  cargarFestivosLS();
+  cargarPeriodoLS();
+  renderCalGrid();
+}
+
 function buildHolidaySet(){
   const s = new Set(FESTIVOS_BASE);
   for(const f of festivosExtra) s.add(f);
@@ -78,6 +137,7 @@ function renderCalGrid(){
     t.innerHTML = `${fmtIso(iso)} <em style="font-weight:400;color:#777">Personalizado</em><span class="rm" onclick="removeHoliday('${iso}')">×</span>`;
     grid.appendChild(t);
   }
+  actualizarPeriodoResumen();
 }
 
 function addHoliday(){
@@ -87,11 +147,13 @@ function addHoliday(){
   const iso = `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
   if(!festivosExtra.includes(iso)) festivosExtra.push(iso);
   document.getElementById('newHoliday').value = '';
+  guardarFestivosLS();
   renderCalGrid();
 }
 
 function removeHoliday(iso){
   festivosExtra = festivosExtra.filter(f => f !== iso);
+  guardarFestivosLS();
   renderCalGrid();
 }
 

@@ -24,21 +24,30 @@ function irPaso2(){
 
   for(const [no,p] of Object.entries(profesores)){
     const tr = document.createElement('tr');
-    // Build per-day sub-table HTML (supports 2 blocks per day)
+    // Build per-day rows (flex layout, sin rowspan) — soporta 2 bloques por día
+    // sin que el 2° bloque desordene el resto de la fila al mostrarse/ocultarse.
     const subRows = DIAS.map(d=>`
-      <tr>
-        <td rowspan="2" style="vertical-align:top;padding-top:5px">${d.label}</td>
-        <td><span class="bloque-badge">1°</span><input type="time" id="entrada_${no}_${d.key}" value="08:00"/></td>
-        <td><input type="time" id="salida_${no}_${d.key}" value="09:00"/></td>
-        <td rowspan="2" style="vertical-align:middle">
-          <label class="day-off"><input type="checkbox" id="libre_${no}_${d.key}" onchange="toggleDayOff('${no}','${d.key}')"/> Libre</label><br/>
+      <div class="sched-day-row">
+        <div class="sched-day-name">${d.label}</div>
+        <div class="sched-day-blocks">
+          <div class="sched-block">
+            <span class="bloque-badge">1°</span>
+            <input type="time" id="entrada_${no}_${d.key}" value="08:00"/>
+            <span class="arrow">→</span>
+            <input type="time" id="salida_${no}_${d.key}" value="09:00"/>
+          </div>
+          <div class="sched-block bloque2" id="bloque2_${no}_${d.key}">
+            <span class="bloque-badge bloque-badge-2">2°</span>
+            <input type="time" id="entrada2_${no}_${d.key}" value="15:00"/>
+            <span class="arrow">→</span>
+            <input type="time" id="salida2_${no}_${d.key}" value="16:00"/>
+          </div>
+        </div>
+        <div class="sched-day-actions">
+          <label class="day-off"><input type="checkbox" id="libre_${no}_${d.key}" onchange="toggleDayOff('${no}','${d.key}')"/> Libre</label>
           <button class="btn-bloque" onclick="toggleBloque2('${no}','${d.key}')" id="btnb2_${no}_${d.key}">+ 2° bloque</button>
-        </td>
-      </tr>
-      <tr class="bloque2-row" id="bloque2_${no}_${d.key}">
-        <td><span class="bloque-badge" style="background:#d4e8d4;color:#1a4a1a;border-color:#90b890">2°</span><input type="time" id="entrada2_${no}_${d.key}" value="15:00"/></td>
-        <td><input type="time" id="salida2_${no}_${d.key}" value="16:00"/></td>
-      </tr>`).join('');
+        </div>
+      </div>`).join('');
 
     tr.innerHTML = `
       <td>${no}</td>
@@ -52,10 +61,10 @@ function irPaso2(){
           <span>Activar horario por día</span>
         </label>
         <div class="sched-days" id="scheddays_${no}">
-          <table>
-            <thead><tr><th>Día</th><th>Entrada</th><th>Salida ref.</th><th></th></tr></thead>
-            <tbody>${subRows}</tbody>
-          </table>
+          <div class="sched-days-head">
+            <span>Día</span><span>Bloques de horario</span><span></span>
+          </div>
+          ${subRows}
         </div>
       </td>`;
     tbody.appendChild(tr);
@@ -98,10 +107,10 @@ function toggleDayOff(no,dia){
 }
 
 function toggleBloque2(no,dia){
-  const row = document.getElementById(`bloque2_${no}_${dia}`);
+  const bloque = document.getElementById(`bloque2_${no}_${dia}`);
   const btn = document.getElementById(`btnb2_${no}_${dia}`);
-  if(!row) return;
-  const visible = row.classList.toggle('visible');
+  if(!bloque) return;
+  const visible = bloque.classList.toggle('visible');
   btn.textContent = visible ? '− Quitar 2° bloque' : '+ 2° bloque';
 }
 
