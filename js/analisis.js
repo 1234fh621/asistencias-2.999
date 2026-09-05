@@ -154,9 +154,9 @@ function analizar(){
   const sb = document.getElementById('summaryBar');
   sb.innerHTML = `
     <div class="sum-pill"><strong>${Object.keys(profesores).length}</strong>Docentes</div>
-    <div class="sum-pill"><strong>${totalConInc}</strong>Con incidencias</div>
-    <div class="sum-pill"><strong>${totalOk}</strong>Sin incidencias</div>
-    <div class="sum-pill"><strong>${totalFaltasAusencia}</strong>Faltas por ausencia</div>
+    <div class="sum-pill sum-pill-warn"><strong>${totalConInc}</strong>Con incidencias</div>
+    <div class="sum-pill sum-pill-ok"><strong>${totalOk}</strong>Sin incidencias</div>
+    <div class="sum-pill sum-pill-danger"><strong>${totalFaltasAusencia}</strong>Faltas por ausencia</div>
   `;
   renderResultados();
 
