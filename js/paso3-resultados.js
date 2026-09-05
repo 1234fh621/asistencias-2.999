@@ -106,11 +106,9 @@ function exportarTxt(){
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Arial, sans-serif; font-size: 11px; padding: 20px 30px; color:#1a1a1a; }
-  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 2px solid #1a2b3c; padding-bottom: 10px; }
-  .header img { height: 50px; object-fit: contain; }
-  .header-center { text-align: center; }
-  .header-center p { font-size: 13px; font-weight: bold; color: #1a2b3c; }
-  .header-center small { font-size: 10px; color: #444; }
+  .header { text-align:center; margin-bottom: 14px; border-bottom: 2px solid #1a2b3c; padding-bottom: 10px; }
+  .header p { font-size: 14px; font-weight: bold; color: #1a2b3c; }
+  .header small { font-size: 10px; color: #444; }
   .meta { display:flex; justify-content:space-between; font-size:10px; color:#555; margin-bottom:14px; }
   h2 { font-size: 12px; color:#1a2b3c; text-transform:uppercase; letter-spacing:.3px; margin: 16px 0 8px; border-bottom:1px solid #ddd; padding-bottom:4px; }
   table { width: 100%; border-collapse: collapse; }
@@ -126,13 +124,8 @@ function exportarTxt(){
 <body>
 
 <div class="header">
-  <img src="img/LOGO-VERTICAL-TECNM.png" alt="TecNM"/>
-  <div class="header-center">
-    <img src="img/SEP_Logo_2026.png" alt="SEP" style="height:45px"/>
-    <p>Reporte general de asistencias</p>
-    <small>TecNM · Instituto Tecnológico de Mexicali</small>
-  </div>
-  <img src="img/LOGO-VERTICAL-TECNM.png" alt="TecNM"/>
+  <p>Reporte general de asistencias</p>
+  <small>TecNM · Instituto Tecnológico de Mexicali</small>
 </div>
 
 <div class="meta">
