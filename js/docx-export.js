@@ -30,8 +30,8 @@ const MESES_LARGO = ['enero','febrero','marzo','abril','mayo','junio','julio',
  */
 async function generarMemoDocx(no){
   const r = resultados.find(x => x.no === no);
-  if(!r){ alert('No se encontraron resultados para ese docente.'); return; }
-  if(!r.incidencias || r.incidencias.length===0){ alert('Ese docente no tiene incidencias.'); return; }
+  if(!r){ showAlert('No se encontraron resultados para ese docente.', 'error'); return; }
+  if(!r.incidencias || r.incidencias.length===0){ showAlert('Ese docente no tiene incidencias.', 'info'); return; }
 
   const numeroMemo = prompt('Ingresa el número de memo (ej. 070):');
   if(!numeroMemo) return;
@@ -94,13 +94,13 @@ async function generarMemoDocx(no){
     if(e.properties && e.properties.errors){
       // Errores típicos de docxtemplater: marcador no encontrado, etc.
       console.error(JSON.stringify(e.properties.errors, null, 2));
-      alert('Error al generar el memo: revisa la consola para más detalle (posible marcador faltante en la plantilla).');
+      showAlert('Error al generar el memo: revisa la consola para más detalle (posible marcador faltante en la plantilla).', 'error');
     } else {
-      alert('Error al generar el memo: ' + e.message);
+      showAlert('Error al generar el memo: ' + e.message, 'error');
     }
   }
 
-  if(btn){ btn.disabled = false; btn.textContent = '📄 Memo'; }
+  if(btn){ btn.disabled = false; btn.innerHTML = `${appIcon('file')} Memo`; }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -177,7 +177,7 @@ function fechaLargaPalabras(d){
  */
 async function generarConstanciaDocx(no){
   const p = profesores[no];
-  if(!p){ alert('No se encontró información de ese docente.'); return; }
+  if(!p){ showAlert('No se encontró información de ese docente.', 'error'); return; }
 
   const numeroMemo = prompt('Ingresa el número de memo (ej. 070):');
   if(!numeroMemo) return;
@@ -225,11 +225,11 @@ async function generarConstanciaDocx(no){
     console.error(e);
     if(e.properties && e.properties.errors){
       console.error(JSON.stringify(e.properties.errors, null, 2));
-      alert('Error al generar la constancia: revisa la consola para más detalle (posible marcador faltante en la plantilla).');
+      showAlert('Error al generar la constancia: revisa la consola para más detalle (posible marcador faltante en la plantilla).', 'error');
     } else {
-      alert('Error al generar la constancia: ' + e.message);
+      showAlert('Error al generar la constancia: ' + e.message, 'error');
     }
   }
 
-  if(btn){ btn.disabled = false; btn.textContent = '📄 Constancia'; }
+  if(btn){ btn.disabled = false; btn.innerHTML = `${appIcon('file')} Constancia`; }
 }

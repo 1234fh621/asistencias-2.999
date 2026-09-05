@@ -152,9 +152,9 @@ function toggleDia(iso, dow){
   renderCalendario();
 }
 
-function resetCalendario(){
+async function resetCalendario(){
   if(Object.keys(diasOverride).length===0) return;
-  if(!confirm('¿Restablecer el calendario a los días festivos/fines de semana por defecto? Se perderán tus marcas manuales.')) return;
+  if(!(await showConfirm('¿Restablecer el calendario a los días festivos/fines de semana por defecto?\nSe perderán tus marcas manuales.'))) return;
   diasOverride = {};
   guardarOverrideLS();
   renderCalendario();

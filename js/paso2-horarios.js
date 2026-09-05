@@ -4,7 +4,7 @@
 function irPaso1(){ setStep(1); }
 
 function irPaso2(){
-  if(!datosAsist.length){ alert('Primero procese los datos.'); return; }
+  if(!datosAsist.length){ showAlert('Primero procese los datos.', 'warning'); return; }
   profesores = {};
   for(const r of datosAsist){
     if(!profesores[r.no]) profesores[r.no] = {nombre:r.nombre,apellidos:r.apellidos,checadas:[]};

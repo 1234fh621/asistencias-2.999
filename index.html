@@ -28,7 +28,7 @@
 
   <!-- Configuración del periodo (fechas + días no laborables) -->
   <details class="cal-details" id="calDetails" open>
-    <summary>⚙ Configuración del periodo y días no laborables <span id="periodoResumen" class="periodo-resumen"></span></summary>
+    <summary><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span> Configuración del periodo y días no laborables <span id="periodoResumen" class="periodo-resumen"></span></summary>
 
     <div class="cal-details-body">
       <!-- Periodo -->
@@ -43,7 +43,7 @@
 
       <!-- Calendario festivos -->
       <div class="notice-info">
-        <strong>📅 Marca los días que se trabajan — Calendario ITM 2026</strong>
+        <strong><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span> Marca los días que se trabajan — Calendario ITM 2026</strong>
         Por defecto: sábados, domingos y los festivos/suspensiones ITM aparecen en <strong>negro</strong> (no se trabaja); el resto en <strong>verde</strong> (se trabaja, checada obligatoria). Da clic en cualquier día para cambiarlo.
         <div class="cal-legend">
           <span><i class="cal-swatch cal-swatch-on"></i> Se trabaja</span>
@@ -135,11 +135,14 @@ El a. m./p. m. puede venir como columna separada — se maneja automáticamente.
   <div class="row-actions">
     <button class="btn btn-secondary" onclick="irPaso2()">Ajustar horarios</button>
     <button class="btn btn-primary" onclick="nuevaConsulta()">Nueva consulta</button>
-    <button class="btn btn-word" id="btnExportWord" onclick="exportarTxt()" style="display:none">⬇ Exportar a PDF</button>
+    <button class="btn btn-word" id="btnExportWord" onclick="exportarTxt()" style="display:none"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span> Exportar a PDF</button>
   </div>
-  <p style="font-size:10px;color:#888;margin-top:8px">El memo individual (.docx, con membrete y logos originales) se genera por docente con el botón "📄 Memo" de cada fila.</p>
+  <p style="font-size:10px;color:#888;margin-top:8px">El memo individual (.docx, con membrete y logos originales) se genera por docente con el botón "<span class="icon-inline" style="vertical-align:-2px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"/><polyline points="14 2 14 8 20 8"/></svg></span> Memo" de cada fila.</p>
 </div><!-- /card -->
 </div><!-- /sec3 -->
+  <footer class="app-footer">
+    Desarrollado por Ricardo Pérez Félix y Fabián García Villegas para el Departamento de Recursos Humanos
+  </footer>
 
 </div><!-- /container -->
 
@@ -148,6 +151,7 @@ El a. m./p. m. puede venir como columna separada — se maneja automáticamente.
   en los anteriores (calendario → fechas → parsers → estado → análisis → UI).
 -->
 
+<script src="js/modal.js"></script>
 <script src="js/calendario.js"></script>
 <script src="js/fechas.js"></script>
 <script src="js/parser-asistencias.js"></script>

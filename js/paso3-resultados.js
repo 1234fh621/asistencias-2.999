@@ -37,7 +37,7 @@ function renderResultados(){
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${r.no}</td><td>${r.nombre} ${r.apellidos}<br>${schedLabelHtml(r)}</td>
       <td style="max-width:360px">${obs}</td>
-      <td><button class="btn btn-word btn-sm" id="btnMemo_${r.no}" onclick="generarMemoDocx('${r.no}')">📄 Memo</button></td>`;
+      <td><button class="btn btn-word btn-sm" id="btnMemo_${r.no}" onclick="generarMemoDocx('${r.no}')">${appIcon('file')} Memo</button></td>`;
     tbody.appendChild(tr);
   }
 
@@ -45,8 +45,8 @@ function renderResultados(){
   for(const p of sinIncidencias){
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${p.no}</td><td>${p.nombre} ${p.apellidos}<br>${schedLabelHtml(p)}</td>
-      <td style="color:#3a5a3a;font-size:11px">✓ Sin incidencias en el periodo</td>
-      <td><button class="btn btn-word btn-sm" id="btnConst_${p.no}" onclick="generarConstanciaDocx('${p.no}')">📄 Constancia</button></td>`;
+      <td style="color:#3a5a3a;font-size:11px">${appIcon('check')} Sin incidencias en el periodo</td>
+      <td><button class="btn btn-word btn-sm" id="btnConst_${p.no}" onclick="generarConstanciaDocx('${p.no}')">${appIcon('file')} Constancia</button></td>`;
     tbody.appendChild(tr);
   }
 }
@@ -163,10 +163,10 @@ ${filasSinInc ? `<div class="sin-inc">${filasSinInc}</div>` : `<div class="empty
 
   } catch(e){
     console.error(e);
-    alert('Error al generar el PDF: ' + e.message);
+    showAlert('Error al generar el PDF: ' + e.message, 'error');
   }
   btn.disabled = false;
-  btn.textContent = '⬇ Exportar a PDF';
+  btn.innerHTML = `${appIcon('download')} Exportar a PDF`;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
