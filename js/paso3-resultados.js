@@ -11,15 +11,15 @@ const TL = {
 
 function schedLabelHtml(p){
   return p.horarioVariable
-    ? '<span style="font-size:9px;background:#e8edf2;border:1px solid #c0ccd8;border-radius:2px;padding:1px 5px;color:#1a3a6c;font-weight:700;margin-left:4px">HORARIO VARIABLE</span>'
-    : `<span style="font-size:9px;color:#888">${p.horaEntrada}–${p.horaSalida}</span>`;
+    ? '<span class="bloque-badge" style="font-size:9px;margin-left:4px">HORARIO VARIABLE</span>'
+    : `<span style="font-size:9px;color:var(--text-muted)">${p.horaEntrada}–${p.horaSalida}</span>`;
 }
 
 function renderResultados(){
   const tbody = document.getElementById('bodyResultados');
   tbody.innerHTML = '';
   if(!resultados.length && !sinIncidencias.length){
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#888;padding:18px;font-size:11px">No hay datos que mostrar.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:18px;font-size:11px">No hay datos que mostrar.</td></tr>';
     return;
   }
 
@@ -27,10 +27,10 @@ function renderResultados(){
   for(const r of resultados){
     let obs = '';
     for(const inc of r.incidencias){
-      obs += `<div style="margin-bottom:5px"><span style="font-size:10px;font-weight:700;color:#333;margin-right:4px">${fmtDia(inc.fecha)}</span>`;
-      if(inc.bloqueLabel) obs += `<span style="font-size:9px;color:#1a3a6c;background:#dce8f5;border:1px solid #b0cce0;border-radius:2px;padding:1px 4px;margin-right:3px;font-weight:700">${inc.bloqueLabel}</span>`;
+      obs += `<div style="margin-bottom:5px"><span style="font-size:10px;font-weight:700;color:var(--text-main);margin-right:4px">${fmtDia(inc.fecha)}</span>`;
+      if(inc.bloqueLabel) obs += `<span class="bloque-badge" style="font-size:9px;margin-right:3px">${inc.bloqueLabel}</span>`;
       for(const t of inc.tipos){ const [cls,lbl]=TL[t]||['',t]; obs += `<span class="tag ${cls}">${lbl}</span>`; }
-      if(inc.esAusencia) obs += ` <span style="font-size:10px;color:#888">Sin checadas</span>`;
+      if(inc.esAusencia) obs += ` <span style="font-size:10px;color:var(--text-muted)">Sin checadas</span>`;
       for(const c of inc.refs) obs += `<div class="chk">${c}</div>`;
       obs += '</div>';
     }
@@ -45,7 +45,7 @@ function renderResultados(){
   for(const p of sinIncidencias){
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${p.no}</td><td>${p.nombre} ${p.apellidos}<br>${schedLabelHtml(p)}</td>
-      <td style="color:#3a5a3a;font-size:11px">${appIcon('check')} Sin incidencias en el periodo</td>
+      <td style="color:var(--ok-text);font-size:11px">${appIcon('check')} Sin incidencias en el periodo</td>
       <td><button class="btn btn-word btn-sm" id="btnConst_${p.no}" onclick="generarConstanciaDocx('${p.no}')">${appIcon('file')} Constancia</button></td>`;
     tbody.appendChild(tr);
   }

@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Análisis de Asistencias – TecNM ITM Mexicali</title>
 <link rel="icon" type="image/png" href="img/favicon.png"/>
+<script>
+  // Anti-parpadeo: aplica el tema guardado ANTES de pintar la página,
+  // para que no se vea un destello claro al recargar en modo oscuro.
+  (function(){
+    try{
+      if(localStorage.getItem('itmAsist_theme') === 'dark'){
+        document.documentElement.classList.add('dark');
+      }
+    }catch(e){}
+  })();
+</script>
 <link rel="stylesheet" href="css/styles.css"/>
 </head>
 <body>
@@ -23,6 +34,10 @@
       <h1>Análisis de asistencias docentes <span style="display:inline;font-size:11px;color:#8fa4b8;font-weight:400"> — TecNM / ITM Mexicali</span></h1>
       <span>Periodo enero – mayo 2026 · Calendario oficial ITM · Detección de faltas por ausencia total</span>
     </div>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Cambiar a modo claro/oscuro" aria-label="Cambiar tema">
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
   </div>
 </header>
 
@@ -47,11 +62,11 @@
       <!-- Periodo -->
       <div class="periodo-row">
         <label>Periodo de análisis (cambia aquí para cada semestre):</label>
-        <span style="font-size:11px;color:#555">Inicio</span>
+        <span style="font-size:11px;color:var(--text-soft)">Inicio</span>
         <input type="date" id="periodoInicio" value="2026-01-07" onchange="guardarPeriodoLS()"/>
-        <span style="font-size:11px;color:#555">Fin</span>
+        <span style="font-size:11px;color:var(--text-soft)">Fin</span>
         <input type="date" id="periodoFin" value="2026-05-21" onchange="guardarPeriodoLS()"/>
-        <span style="font-size:10px;color:#888">Define qué días del calendario de abajo se muestran como período a evaluar. Un día hábil sin checada = FALTA.</span>
+        <span style="font-size:10px;color:var(--text-muted)">Define qué días del calendario de abajo se muestran como período a evaluar. Un día hábil sin checada = FALTA.</span>
       </div>
 
       <!-- Calendario festivos -->
@@ -66,7 +81,7 @@
         <div class="cal-calendar" id="calCalendar"></div>
         <div class="custom-row">
           <button class="btn btn-secondary btn-sm" onclick="resetCalendario()" style="color:#a03030;border-color:#c8a0a0">Restablecer calendario</button>
-          <span style="font-size:10px;color:#777">Tus marcas se guardan automáticamente (aunque recargues o cierres la página).</span>
+          <span style="font-size:10px;color:var(--text-muted)">Tus marcas se guardan automáticamente (aunque recargues o cierres la página).</span>
         </div>
       </div>
     </div>
@@ -79,12 +94,12 @@
 418   Enriqueta   Salazar Ruiz   07/01/2026 04:10 p. m.
 
 Compatible con: a. m. / p. m., am/pm, tabulaciones, pipes, comas."></textarea>
-  <span style="font-size:11px;color:#888;margin-top:3px;display:block">Campos: NO. — Nombre — Apellidos — Fecha (DD/MM/AAAA HH:MM a. m./p. m.)</span>
+  <span style="font-size:11px;color:var(--text-muted);margin-top:3px;display:block">Campos: NO. — Nombre — Apellidos — Fecha (DD/MM/AAAA HH:MM a. m./p. m.)</span>
 
   <div class="sep"></div>
 
   <!-- Justificaciones -->
-  <span class="field-label">Justificaciones <span style="font-size:10px;font-weight:400;color:#666;margin-left:4px">— Opcional, un registro por línea</span></span>
+  <span class="field-label">Justificaciones <span style="font-size:10px;font-weight:400;color:var(--text-muted);margin-left:4px">— Opcional, un registro por línea</span></span>
   <textarea id="pasteJust" style="min-height:90px" placeholder="Pegue directamente desde el sistema (separado por tabulaciones):
 De Reza De La Cruz	475	12/01/2026 08:00:00 a. m.	16/01/2026 02:00:00 p. m.	Comision	OFICIO NO. SAC-064/2026	15/01/2026
 De Reza De La Cruz	475	03/02/2026	16/02/2026 11:59:00 p. m.	Licencia Medica	INCAPACIDAD ISSSTE ...	10/02/2026
@@ -110,7 +125,7 @@ El a. m./p. m. puede venir como columna separada — se maneja automáticamente.
 <div class="section" id="sec2">
 <div class="card">
   <div class="card-title">Horarios de primera actividad <span class="badge-step">Paso 2</span></div>
-  <p style="font-size:11px;color:#666;margin-bottom:12px">Hora de primera actividad según Ambar. Los días sin ninguna checada dentro del periodo se marcan como Falta.</p>
+  <p style="font-size:11px;color:var(--text-soft);margin-bottom:12px">Hora de primera actividad según Ambar. Los días sin ninguna checada dentro del periodo se marcan como Falta.</p>
   <div class="notice-info" style="margin-bottom:10px">
     <strong><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg></span> Horarios fijos, variables y con doble bloque</strong>
     Por defecto cada docente tiene un horario único (Lun–Vie). Si un docente entra/sale a horas distintas según el día, activa <em>"Horario por día"</em>. Si además tiene <strong>dos bloques en el mismo día</strong> (ej. 8–9 am y luego 3–4 pm), usa el botón <strong>+ 2° bloque</strong> en ese día para configurar el turno tarde por separado.
@@ -150,7 +165,7 @@ El a. m./p. m. puede venir como columna separada — se maneja automáticamente.
     <button class="btn btn-primary" onclick="nuevaConsulta()">Nueva consulta</button>
     <button class="btn btn-word" id="btnExportWord" onclick="exportarTxt()" style="display:none"><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span> Exportar a PDF</button>
   </div>
-  <p style="font-size:10px;color:#888;margin-top:8px">El memo individual (.docx, con membrete y logos originales) se genera por docente con el botón "<span class="icon-inline" style="vertical-align:-2px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"/><polyline points="14 2 14 8 20 8"/></svg></span> Memo" de cada fila.</p>
+  <p style="font-size:10px;color:var(--text-muted);margin-top:8px">El memo individual (.docx, con membrete y logos originales) se genera por docente con el botón "<span class="icon-inline" style="vertical-align:-2px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"/><polyline points="14 2 14 8 20 8"/></svg></span> Memo" de cada fila.</p>
 </div><!-- /card -->
 </div><!-- /sec3 -->
   <footer class="app-footer">
