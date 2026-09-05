@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// CALENDARIO ITM ENERO–MAYO 2026
+// CALENDARIO ITM ENERO–MAYO 2026 — reglas por defecto
 // ═══════════════════════════════════════════════════════════════════════════
 const FESTIVOS_BASE = [
   // 1–6 enero (inicio de año / sin clases)
@@ -39,24 +39,31 @@ const FESTIVOS_LABELS = {
   '2026-05-15':'Día del Maestro',
 };
 
-let festivosExtra = [];
+const MESES_CORTOS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio',
+  'Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DIAS_SEMANA_CORTOS = ['L','M','X','J','V','S','D']; // empieza en lunes
+
+// diasOverride[iso] = true (verde, SÍ se trabaja) | false (negro, NO se trabaja)
+// Solo contiene los días donde el usuario dio clic para cambiar la regla por
+// defecto (fin de semana / festivo ITM = negro; resto = verde).
+let diasOverride = {};
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PERSISTENCIA LOCAL — periodo y festivos personalizados sobreviven a
+// PERSISTENCIA LOCAL — periodo y el calendario marcado a mano sobreviven a
 // recargar la página o cerrar el navegador (localStorage del dispositivo).
 // ═══════════════════════════════════════════════════════════════════════════
-const LS_KEY_FESTIVOS = 'itmAsist_festivosExtra';
+const LS_KEY_OVERRIDE = 'itmAsist_diasOverride';
 const LS_KEY_PERIODO_INI = 'itmAsist_periodoInicio';
 const LS_KEY_PERIODO_FIN = 'itmAsist_periodoFin';
 
-function guardarFestivosLS(){
-  try{ localStorage.setItem(LS_KEY_FESTIVOS, JSON.stringify(festivosExtra)); }catch(e){}
+function guardarOverrideLS(){
+  try{ localStorage.setItem(LS_KEY_OVERRIDE, JSON.stringify(diasOverride)); }catch(e){}
 }
 
-function cargarFestivosLS(){
+function cargarOverrideLS(){
   try{
-    const raw = localStorage.getItem(LS_KEY_FESTIVOS);
-    if(raw){ const arr = JSON.parse(raw); if(Array.isArray(arr)) festivosExtra = arr; }
+    const raw = localStorage.getItem(LS_KEY_OVERRIDE);
+    if(raw){ const obj = JSON.parse(raw); if(obj && typeof obj==='object') diasOverride = obj; }
   }catch(e){ /* ignorar si el navegador bloquea localStorage */ }
 }
 
@@ -65,7 +72,7 @@ function guardarPeriodoLS(){
     localStorage.setItem(LS_KEY_PERIODO_INI, document.getElementById('periodoInicio').value);
     localStorage.setItem(LS_KEY_PERIODO_FIN, document.getElementById('periodoFin').value);
   }catch(e){}
-  actualizarPeriodoResumen();
+  renderCalendario();
 }
 
 function cargarPeriodoLS(){
@@ -77,84 +84,38 @@ function cargarPeriodoLS(){
   }catch(e){}
 }
 
-function actualizarPeriodoResumen(){
-  const el = document.getElementById('periodoResumen');
-  if(!el) return;
-  const ini = document.getElementById('periodoInicio').value;
-  const fin = document.getElementById('periodoFin').value;
-  const nExtra = festivosExtra.length;
-  el.textContent = ini && fin ? `${fmtIso(ini)} → ${fmtIso(fin)}${nExtra?` · ${nExtra} día(s) personalizado(s)`:''}` : '';
-}
-
-function limpiarFestivosExtra(){
-  if(festivosExtra.length===0) return;
-  if(!confirm('¿Quitar todos los días personalizados agregados?')) return;
-  festivosExtra = [];
-  guardarFestivosLS();
-  renderCalGrid();
-}
-
 function initConfigPeriodo(){
-  cargarFestivosLS();
+  cargarOverrideLS();
   cargarPeriodoLS();
-  renderCalGrid();
+  renderCalendario();
 }
 
-function buildHolidaySet(){
-  const s = new Set(FESTIVOS_BASE);
-  for(const f of festivosExtra) s.add(f);
-  return s;
-}
-
+// ═══════════════════════════════════════════════════════════════════════════
+// REGLA DE DÍA HÁBIL
+// ═══════════════════════════════════════════════════════════════════════════
 function isoDay(d){
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-function esDiaHabil(d){
-  const dow = d.getDay();
+/** Regla por defecto SIN overrides: Lun-Vie y no festivo ITM = se trabaja. */
+function reglaBaseTrabaja(iso, dow){
   if(dow===0||dow===6) return false;
-  return !buildHolidaySet().has(isoDay(d));
+  return !FESTIVOS_BASE.includes(iso);
+}
+
+/** true = verde (se trabaja, cuenta falta si no hay checada) · false = negro (no se trabaja) */
+function trabajaDia(iso, dow){
+  if(Object.prototype.hasOwnProperty.call(diasOverride, iso)) return diasOverride[iso];
+  return reglaBaseTrabaja(iso, dow);
+}
+
+function esDiaHabil(d){
+  return trabajaDia(isoDay(d), d.getDay());
 }
 
 function fmtIso(iso){
   const [y,m,d] = iso.split('-');
   return `${d}/${m}/${y}`;
-}
-
-function renderCalGrid(){
-  const grid = document.getElementById('calGrid');
-  grid.innerHTML = '';
-  const all = [...new Set(FESTIVOS_BASE)].sort();
-  for(const iso of all){
-    const t = document.createElement('span');
-    t.className = 'cal-tag';
-    t.innerHTML = `${fmtIso(iso)} <em style="font-weight:400;color:#666">${FESTIVOS_LABELS[iso]||''}</em>`;
-    grid.appendChild(t);
-  }
-  for(const iso of festivosExtra.sort()){
-    const t = document.createElement('span');
-    t.className = 'cal-tag';
-    t.innerHTML = `${fmtIso(iso)} <em style="font-weight:400;color:#777">Personalizado</em><span class="rm" onclick="removeHoliday('${iso}')">×</span>`;
-    grid.appendChild(t);
-  }
-  actualizarPeriodoResumen();
-}
-
-function addHoliday(){
-  const v = document.getElementById('newHoliday').value.trim();
-  const m = v.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-  if(!m){ alert('Formato inválido. Use DD/MM/AAAA'); return; }
-  const iso = `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
-  if(!festivosExtra.includes(iso)) festivosExtra.push(iso);
-  document.getElementById('newHoliday').value = '';
-  guardarFestivosLS();
-  renderCalGrid();
-}
-
-function removeHoliday(iso){
-  festivosExtra = festivosExtra.filter(f => f !== iso);
-  guardarFestivosLS();
-  renderCalGrid();
 }
 
 function getDiasHabilesPeriodo(){
@@ -165,4 +126,112 @@ function getDiasHabilesPeriodo(){
     if(esDiaHabil(new Date(d))) dias.push(isoDay(new Date(d)));
   }
   return dias;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CALENDARIO VISUAL — clic en un día para alternar verde (labora) / negro (no labora)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Devuelve [{year,month}] de cada mes que toca el rango periodoInicio..periodoFin */
+function mesesDelPeriodo(ini, fin){
+  const meses = [];
+  let y = ini.getFullYear(), m = ini.getMonth();
+  const yFin = fin.getFullYear(), mFin = fin.getMonth();
+  while(y < yFin || (y===yFin && m<=mFin)){
+    meses.push({year:y, month:m});
+    m++;
+    if(m>11){ m=0; y++; }
+  }
+  return meses;
+}
+
+function toggleDia(iso, dow){
+  const actual = trabajaDia(iso, dow);
+  diasOverride[iso] = !actual;
+  guardarOverrideLS();
+  renderCalendario();
+}
+
+function resetCalendario(){
+  if(Object.keys(diasOverride).length===0) return;
+  if(!confirm('¿Restablecer el calendario a los días festivos/fines de semana por defecto? Se perderán tus marcas manuales.')) return;
+  diasOverride = {};
+  guardarOverrideLS();
+  renderCalendario();
+}
+
+function renderCalendario(){
+  const cont = document.getElementById('calCalendar');
+  const resumen = document.getElementById('periodoResumen');
+  if(!cont) return;
+
+  const iniVal = document.getElementById('periodoInicio')?.value;
+  const finVal = document.getElementById('periodoFin')?.value;
+  if(!iniVal || !finVal){ cont.innerHTML=''; return; }
+  const ini = new Date(iniVal+'T12:00:00');
+  const fin = new Date(finVal+'T12:00:00');
+
+  cont.innerHTML = '';
+  const meses = mesesDelPeriodo(ini, fin);
+  let nCambios = 0;
+
+  for(const {year,month} of meses){
+    const wrap = document.createElement('div');
+    wrap.className = 'cal-month';
+
+    const titulo = document.createElement('div');
+    titulo.className = 'cal-month-title';
+    titulo.textContent = `${MESES_CORTOS[month]} ${year}`;
+    wrap.appendChild(titulo);
+
+    const gridHead = document.createElement('div');
+    gridHead.className = 'cal-month-grid cal-month-head';
+    for(const dl of DIAS_SEMANA_CORTOS){
+      const c = document.createElement('span');
+      c.textContent = dl;
+      gridHead.appendChild(c);
+    }
+    wrap.appendChild(gridHead);
+
+    const grid = document.createElement('div');
+    grid.className = 'cal-month-grid';
+
+    const primerDia = new Date(year, month, 1);
+    // offset: 0=lunes ... 6=domingo
+    let offset = primerDia.getDay()-1; if(offset<0) offset=6;
+    for(let i=0;i<offset;i++){
+      const blank = document.createElement('span');
+      blank.className = 'cal-day cal-day-blank';
+      grid.appendChild(blank);
+    }
+
+    const diasEnMes = new Date(year, month+1, 0).getDate();
+    for(let dia=1; dia<=diasEnMes; dia++){
+      const d = new Date(year, month, dia, 12,0,0);
+      const iso = isoDay(d);
+      const dow = d.getDay();
+      const dentroPeriodo = d>=new Date(ini.getFullYear(),ini.getMonth(),ini.getDate()) && d<=new Date(fin.getFullYear(),fin.getMonth(),fin.getDate());
+
+      const celda = document.createElement('span');
+      celda.textContent = dia;
+      const trabaja = trabajaDia(iso, dow);
+      const esOverride = Object.prototype.hasOwnProperty.call(diasOverride, iso);
+      if(esOverride) nCambios++;
+
+      celda.className = 'cal-day ' + (trabaja ? 'cal-day-on' : 'cal-day-off') + (dentroPeriodo?'':' cal-day-fuera') + (esOverride?' cal-day-marcado':'');
+      let tip = trabaja ? 'Se trabaja' : 'No se trabaja';
+      if(FESTIVOS_LABELS[iso]) tip += ` — ${FESTIVOS_LABELS[iso]}`;
+      if(!dentroPeriodo) tip += ' (fuera del periodo)';
+      tip += ' · clic para cambiar';
+      celda.title = tip;
+      celda.onclick = () => toggleDia(iso, dow);
+      grid.appendChild(celda);
+    }
+    wrap.appendChild(grid);
+    cont.appendChild(wrap);
+  }
+
+  if(resumen){
+    resumen.textContent = `${fmtIso(iniVal)} → ${fmtIso(finVal)}${nCambios?` · ${nCambios} día(s) modificado(s) a mano`:''}`;
+  }
 }
