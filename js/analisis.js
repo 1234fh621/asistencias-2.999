@@ -134,7 +134,7 @@ function analizar(){
 
     if(incidencias.length>0){
       incidencias.sort((a,b)=>a.fecha-b.fecha);
-      resultados.push({no,nombre:p.nombre,apellidos:p.apellidos,depto:p.depto,
+      resultados.push({no,nombre:p.nombre,apellidos:p.apellidos,
         horaEntrada:p.horaEntrada,horaSalida:p.horaSalida,
         horarioVariable:p.horarioVariable||null,incidencias});
       const nFaltas = incidencias.filter(i=>i.tipos.includes('FALTA')).length;
@@ -144,7 +144,7 @@ function analizar(){
     } else {
       logMsg('logAnalisis',`[ok] ${no} ${p.nombre}: sin incidencias`,'ok');
       totalOk++;
-      sinIncidencias.push({no,nombre:p.nombre,apellidos:p.apellidos,depto:p.depto,
+      sinIncidencias.push({no,nombre:p.nombre,apellidos:p.apellidos,
         horaEntrada:p.horaEntrada,horaSalida:p.horaSalida,
         horarioVariable:p.horarioVariable||null});
     }

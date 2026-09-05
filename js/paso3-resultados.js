@@ -19,7 +19,7 @@ function renderResultados(){
   const tbody = document.getElementById('bodyResultados');
   tbody.innerHTML = '';
   if(!resultados.length && !sinIncidencias.length){
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;padding:18px;font-size:11px">No hay datos que mostrar.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#888;padding:18px;font-size:11px">No hay datos que mostrar.</td></tr>';
     return;
   }
 
@@ -36,7 +36,6 @@ function renderResultados(){
     }
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${r.no}</td><td>${r.nombre} ${r.apellidos}<br>${schedLabelHtml(r)}</td>
-      <td><span class="pill-depto">${r.depto||'—'}</span></td>
       <td style="max-width:360px">${obs}</td>
       <td><button class="btn btn-word btn-sm" id="btnMemo_${r.no}" onclick="generarMemoDocx('${r.no}')">📄 Memo</button></td>`;
     tbody.appendChild(tr);
@@ -46,7 +45,6 @@ function renderResultados(){
   for(const p of sinIncidencias){
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${p.no}</td><td>${p.nombre} ${p.apellidos}<br>${schedLabelHtml(p)}</td>
-      <td><span class="pill-depto">${p.depto||'—'}</span></td>
       <td style="color:#3a5a3a;font-size:11px">✓ Sin incidencias en el periodo</td>
       <td><button class="btn btn-word btn-sm" id="btnConst_${p.no}" onclick="generarConstanciaDocx('${p.no}')">📄 Constancia</button></td>`;
     tbody.appendChild(tr);
@@ -83,24 +81,22 @@ function exportarTxt(){
   btn.disabled = true;
   btn.textContent = 'Generando...';
   try {
-    const primerProfe = resultados[0];
-    const nombrePersona = `${primerProfe.nombre} ${primerProfe.apellidos}`.trim();
-    const numero = primerProfe.no;
+    const hoy = new Date();
+    const fechaHoy = `${String(hoy.getDate()).padStart(2,'0')}/${String(hoy.getMonth()+1).padStart(2,'0')}/${hoy.getFullYear()}`;
+    const periodoIni = fmtDia(new Date(document.getElementById('periodoInicio').value+'T12:00:00'));
+    const periodoFin = fmtDia(new Date(document.getElementById('periodoFin').value+'T12:00:00'));
 
-    const filas = [];
-    for(const r of resultados){
-      for(const inc of r.incidencias){
-        const fechaRef = inc.esAusencia ? fmtDia(inc.fecha) : (inc.refs[0] || fmtDia(inc.fecha));
-        const observacion = inc.tipos.map(t => TIPO_LABELS[t] || t).join(' - ');
-        filas.push(`<tr>
-          <td>${r.no}</td>
-          <td>${r.nombre}</td>
-          <td>${r.apellidos}</td>
-          <td>${fechaRef}</td>
-          <td>${observacion}</td>
-        </tr>`);
-      }
-    }
+    const filas = buildFilasWord().map(f => `<tr>
+          <td>${f.no}</td>
+          <td>${f.nombre}</td>
+          <td style="white-space:nowrap">${f.horario}</td>
+          <td style="white-space:nowrap">${f.fecha}</td>
+          <td>${f.observacion}</td>
+        </tr>`).join('\n');
+
+    const filasSinInc = sinIncidencias.map(p =>
+      `<span class="chip-ok">${p.no} — ${p.nombre} ${p.apellidos}</span>`
+    ).join('\n');
 
     const html = `<!DOCTYPE html>
 <html lang="es">
@@ -109,20 +105,21 @@ function exportarTxt(){
 <title>Asistencias ITM</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, sans-serif; font-size: 11px; padding: 20px 30px; }
-  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 2px solid #1a2b3c; padding-bottom: 10px; }
-  .header img { height: 60px; object-fit: contain; }
+  body { font-family: Arial, sans-serif; font-size: 11px; padding: 20px 30px; color:#1a1a1a; }
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 2px solid #1a2b3c; padding-bottom: 10px; }
+  .header img { height: 50px; object-fit: contain; }
   .header-center { text-align: center; }
-  .header-center img { height: 55px; }
-  .header-center p { font-size: 13px; font-weight: bold; color: #1a2b3c; margin-top: 4px; }
+  .header-center p { font-size: 13px; font-weight: bold; color: #1a2b3c; }
   .header-center small { font-size: 10px; color: #444; }
-  .presente { text-align: right; margin-bottom: 10px; font-size: 11px; }
-  .presente strong { display: block; }
-  .intro { margin-bottom: 14px; font-size: 11px; line-height: 1.6; }
-  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  .meta { display:flex; justify-content:space-between; font-size:10px; color:#555; margin-bottom:14px; }
+  h2 { font-size: 12px; color:#1a2b3c; text-transform:uppercase; letter-spacing:.3px; margin: 16px 0 8px; border-bottom:1px solid #ddd; padding-bottom:4px; }
+  table { width: 100%; border-collapse: collapse; }
   th { background: #1a2b3c; color: #fff; padding: 6px 8px; text-align: left; font-size: 10px; text-transform: uppercase; }
-  td { padding: 5px 8px; border: 1px solid #ccc; font-size: 11px; }
-  tr:nth-child(even) td { background: #f5f5f5; }
+  td { padding: 5px 8px; border: 1px solid #ddd; font-size: 11px; vertical-align:top; }
+  tr:nth-child(even) td { background: #f6f6f6; }
+  .sin-inc { display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+  .chip-ok { display:inline-block; background:#eef6ee; border:1px solid #b8d8b8; color:#2a5a2a; border-radius:3px; padding:3px 8px; font-size:10px; }
+  .empty { color:#888; font-size:11px; padding:10px 0; }
   @media print { body { padding: 10px 20px; } }
 </style>
 </head>
@@ -131,34 +128,36 @@ function exportarTxt(){
 <div class="header">
   <img src="img/LOGO-VERTICAL-TECNM.png" alt="TecNM"/>
   <div class="header-center">
-    <img src="img/SEP_Logo_2026.png" alt="SEP"/>
+    <img src="img/SEP_Logo_2026.png" alt="SEP" style="height:45px"/>
+    <p>Reporte general de asistencias</p>
+    <small>TecNM · Instituto Tecnológico de Mexicali</small>
   </div>
   <img src="img/LOGO-VERTICAL-TECNM.png" alt="TecNM"/>
 </div>
 
-<div class="presente">
-  <strong>Presente</strong>
-  x ${numero}
+<div class="meta">
+  <span>Periodo evaluado: <strong>${periodoIni} – ${periodoFin}</strong></span>
+  <span>Generado: <strong>${fechaHoy}</strong></span>
 </div>
 
-<div class="intro">
-  <p>Por medio de la presente</p>
-  <p><strong>${nombrePersona}</strong></p>
-</div>
-
-<table>
+<h2>Docentes con incidencias (${resultados.length})</h2>
+${filas ? `<table>
   <thead>
     <tr>
-      <th>No.</th>
-      <th colspan="2">Nombre</th>
-      <th>Horario</th>
-      <th>Observaciones</th>
+      <th style="width:40px">No.</th>
+      <th>Nombre</th>
+      <th style="width:110px">Horario</th>
+      <th style="width:110px">Fecha</th>
+      <th>Observación</th>
     </tr>
   </thead>
   <tbody>
-    ${filas.join('\n')}
+    ${filas}
   </tbody>
-</table>
+</table>` : `<div class="empty">Sin incidencias registradas.</div>`}
+
+<h2>Docentes sin incidencias (${sinIncidencias.length})</h2>
+${filasSinInc ? `<div class="sin-inc">${filasSinInc}</div>` : `<div class="empty">Ninguno.</div>`}
 
 </body>
 </html>`;

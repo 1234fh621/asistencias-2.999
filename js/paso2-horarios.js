@@ -7,7 +7,7 @@ function irPaso2(){
   if(!datosAsist.length){ alert('Primero procese los datos.'); return; }
   profesores = {};
   for(const r of datosAsist){
-    if(!profesores[r.no]) profesores[r.no] = {nombre:r.nombre,apellidos:r.apellidos,depto:'',checadas:[]};
+    if(!profesores[r.no]) profesores[r.no] = {nombre:r.nombre,apellidos:r.apellidos,checadas:[]};
     profesores[r.no].checadas.push(r.fecha);
   }
 
@@ -52,7 +52,6 @@ function irPaso2(){
     tr.innerHTML = `
       <td>${no}</td>
       <td style="font-size:11px">${p.nombre} ${p.apellidos}</td>
-      <td><input type="text" placeholder="Ej. Sistemas" id="depto_${no}"/></td>
       <td><input type="time" id="entrada_${no}" value="08:00" oninput="syncDayTimes('${no}','entrada')"/></td>
       <td><input type="time" id="salida_${no}" value="16:00" oninput="syncDayTimes('${no}','salida')"/></td>
       <td>
@@ -119,7 +118,6 @@ function irPaso3(){
   const DOW_MAP = {lun:1,mar:2,mie:3,jue:4,vie:5};
 
   for(const no of Object.keys(profesores)){
-    profesores[no].depto = document.getElementById(`depto_${no}`)?.value || '';
     const varActivo = document.getElementById(`varcheck_${no}`)?.checked || false;
     profesores[no].horaEntrada = document.getElementById(`entrada_${no}`)?.value || '08:00';
     profesores[no].horaSalida = document.getElementById(`salida_${no}`)?.value || '16:00';
