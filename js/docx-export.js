@@ -33,7 +33,7 @@ async function generarMemoDocx(no){
   if(!r){ showAlert('No se encontraron resultados para ese docente.', 'error'); return; }
   if(!r.incidencias || r.incidencias.length===0){ showAlert('Ese docente no tiene incidencias.', 'info'); return; }
 
-  const numeroMemo = prompt('Ingresa el número de memo (ej. 070):');
+  const numeroMemo = await showPrompt('Ingresa el número de memo:', {placeholder:'Ej. 070'});
   if(!numeroMemo) return;
 
   const btn = document.getElementById(`btnMemo_${no}`);
@@ -179,7 +179,7 @@ async function generarConstanciaDocx(no){
   const p = profesores[no];
   if(!p){ showAlert('No se encontró información de ese docente.', 'error'); return; }
 
-  const numeroMemo = prompt('Ingresa el número de memo (ej. 070):');
+  const numeroMemo = await showPrompt('Ingresa el número de memo:', {placeholder:'Ej. 070'});
   if(!numeroMemo) return;
 
   const btn = document.getElementById(`btnConst_${no}`);

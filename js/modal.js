@@ -76,3 +76,42 @@ function showAlert(message, type='info'){
 function showConfirm(message){
   return buildModal({type:'warning', message, showCancel:true});
 }
+
+/**
+ * Sustituye prompt(). Debe usarse con await:
+ *   const v = await showPrompt('¿Número de memo?', {placeholder:'Ej. 070'});
+ *   if(!v) return;
+ * Devuelve el texto ingresado, o null si se cancela.
+ */
+function showPrompt(message, {placeholder='', defaultValue=''}={}){
+  return new Promise(resolve => {
+    const root = ensureModalRoot();
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal-box modal-info">
+        <div class="modal-icon">${MODAL_ICONS.info}</div>
+        <div class="modal-msg">${message}</div>
+        <input type="text" class="modal-input" id="modalPromptInput" placeholder="${placeholder}" value="${defaultValue}" autocomplete="off"/>
+        <div class="modal-actions">
+          <button class="modal-btn modal-btn-cancel" data-v="0">Cancelar</button>
+          <button class="modal-btn modal-btn-ok" data-v="1">Aceptar</button>
+        </div>
+      </div>`;
+    root.appendChild(overlay);
+
+    const input = overlay.querySelector('#modalPromptInput');
+    const cleanup = (val) => { overlay.remove(); resolve(val); };
+    const submit = () => { const v = input.value.trim(); cleanup(v ? v : null); };
+
+    overlay.querySelector('.modal-btn-ok').onclick = submit;
+    overlay.querySelector('.modal-btn-cancel').onclick = () => cleanup(null);
+    overlay.onclick = (e) => { if(e.target===overlay) cleanup(null); };
+    input.addEventListener('keydown', (e) => {
+      if(e.key==='Enter'){ e.preventDefault(); submit(); }
+      if(e.key==='Escape'){ e.preventDefault(); cleanup(null); }
+    });
+
+    setTimeout(() => input.focus(), 10);
+  });
+}
