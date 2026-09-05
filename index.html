@@ -4,13 +4,26 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Análisis de Asistencias – TecNM ITM Mexicali</title>
+<link rel="icon" type="image/png" href="img/favicon.png"/>
 <link rel="stylesheet" href="css/styles.css"/>
 </head>
 <body>
 
+<!-- Pantalla de carga inicial -->
+<div id="loadingScreen" class="loading-screen">
+  <div class="loading-ring"></div>
+  <img src="img/logo-itm-small.png" alt="ITM" class="loading-logo"/>
+  <p class="loading-text">Cargando sistema de asistencias<span class="loading-dots"><span>.</span><span>.</span><span>.</span></span></p>
+</div>
+
 <header>
-  <h1>Análisis de asistencias docentes <span style="display:inline;font-size:11px;color:#8fa4b8;font-weight:400"> — TecNM / ITM Mexicali</span></h1>
-  <span>Periodo enero – mayo 2026 · Calendario oficial ITM · Detección de faltas por ausencia total</span>
+  <div class="header-inner">
+    <img src="img/logo-itm-small.png" alt="ITM" class="header-logo"/>
+    <div>
+      <h1>Análisis de asistencias docentes <span style="display:inline;font-size:11px;color:#8fa4b8;font-weight:400"> — TecNM / ITM Mexicali</span></h1>
+      <span>Periodo enero – mayo 2026 · Calendario oficial ITM · Detección de faltas por ausencia total</span>
+    </div>
+  </div>
 </header>
 
 <div class="container">
@@ -99,7 +112,7 @@ El a. m./p. m. puede venir como columna separada — se maneja automáticamente.
   <div class="card-title">Horarios de primera actividad <span class="badge-step">Paso 2</span></div>
   <p style="font-size:11px;color:#666;margin-bottom:12px">Hora de primera actividad según Ambar. Los días sin ninguna checada dentro del periodo se marcan como Falta.</p>
   <div class="notice-info" style="margin-bottom:10px">
-    <strong>💡 Horarios fijos, variables y con doble bloque</strong>
+    <strong><span class="icon-inline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg></span> Horarios fijos, variables y con doble bloque</strong>
     Por defecto cada docente tiene un horario único (Lun–Vie). Si un docente entra/sale a horas distintas según el día, activa <em>"Horario por día"</em>. Si además tiene <strong>dos bloques en el mismo día</strong> (ej. 8–9 am y luego 3–4 pm), usa el botón <strong>+ 2° bloque</strong> en ese día para configurar el turno tarde por separado.
   </div>
   <div style="overflow-x:auto">
@@ -171,6 +184,23 @@ El a. m./p. m. puede venir como columna separada — se maneja automáticamente.
 
 <script>
   initConfigPeriodo();
+
+  // Pantalla de carga: se oculta cuando todo terminó de cargar,
+  // con un mínimo de tiempo visible para que la animación no "parpadee"
+  // y un máximo de seguridad por si algo tarda demasiado.
+  const _loadStart = Date.now();
+  function ocultarLoading(){
+    const ls = document.getElementById('loadingScreen');
+    if(!ls) return;
+    ls.classList.add('loading-hide');
+    setTimeout(() => ls.remove(), 500);
+  }
+  window.addEventListener('load', () => {
+    const minTime = 900;
+    const elapsed = Date.now() - _loadStart;
+    setTimeout(ocultarLoading, Math.max(0, minTime - elapsed));
+  });
+  setTimeout(ocultarLoading, 6000); // seguro: nunca deja al usuario atrapado
 </script>
 </body>
 </html>
