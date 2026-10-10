@@ -1,6 +1,48 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // PARSEO DE ASISTENCIAS — maneja tab con "a. m." en columna separada
 // ═══════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+// NOMBRE vs APELLIDOS — el sistema a veces trae el segundo nombre dentro de los
+// apellidos (ej. nombre "María", apellidos "Fernanda Pérez López"). Regla:
+// si hay 4 o más palabras en total, las dos primeras son el nombre y el resto
+// los apellidos. Las partículas ("De", "De La", "Del", "Los", "Y"…) se pegan a la
+// palabra que sigue, para no confundir "De La Cruz" con tres palabras sueltas.
+// Si el nombre ya viene con dos o más palabras, se respeta tal cual.
+// ═══════════════════════════════════════════════════════════════════════════
+const PARTICULAS_APELLIDO = ['de','del','la','las','los','el','y','e','san','santa','da','di','van','von','le'];
+
+function tokenizarNombre(txt){
+  const palabras = (txt||'').trim().split(/\s+/).filter(Boolean);
+  const tokens = [];
+  let pendiente = [];
+  for(const w of palabras){
+    if(PARTICULAS_APELLIDO.includes(w.toLowerCase())){ pendiente.push(w); continue; }
+    tokens.push([...pendiente, w].join(' '));
+    pendiente = [];
+  }
+  // Partículas sueltas al final (dato raro): se pegan al último token
+  if(pendiente.length){
+    if(tokens.length) tokens[tokens.length-1] += ' ' + pendiente.join(' ');
+    else tokens.push(pendiente.join(' '));
+  }
+  return tokens;
+}
+
+function normalizarNombre(nombre, apellidos){
+  nombre = (nombre||'').trim().replace(/\s+/g,' ');
+  apellidos = (apellidos||'').trim().replace(/\s+/g,' ');
+  const tokNombre = tokenizarNombre(nombre);
+  if(tokNombre.length !== 1) return {nombre, apellidos};   // vacío o ya trae segundo nombre
+  const tokApellidos = tokenizarNombre(apellidos);
+  if(tokApellidos.length >= 3){                             // 1 + 3 o más = 4 o más en total
+    return {
+      nombre: `${nombre} ${tokApellidos[0]}`,
+      apellidos: tokApellidos.slice(1).join(' '),
+    };
+  }
+  return {nombre, apellidos};
+}
+
 function parseTxt(txt){
   // Normalizar a.m./p.m. primero
   let norm = normalizarAmPm(txt);
@@ -31,6 +73,7 @@ function parseTxt(txt){
     else if(tokens.length === 1){ no=tokens[0]; }
 
     if(!no || !/^\d+$/.test(no)) continue;
+    ({nombre, apellidos} = normalizarNombre(nombre, apellidos));
     registros.push({ no, nombre, apellidos, fecha });
   }
 
@@ -41,7 +84,8 @@ function parseTxt(txt){
     while((mr = RE.exec(norm)) !== null){
       const fecha = parseFecha(mr[4]);
       if(!fecha || !esDiaHabil(fecha)) continue;
-      registros.push({ no: mr[1], nombre: mr[2], apellidos: mr[3].trim(), fecha });
+      const nom = normalizarNombre(mr[2], mr[3]);
+      registros.push({ no: mr[1], nombre: nom.nombre, apellidos: nom.apellidos, fecha });
     }
   }
 

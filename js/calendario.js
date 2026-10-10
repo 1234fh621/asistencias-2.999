@@ -48,22 +48,35 @@ const DIAS_SEMANA_CORTOS = ['L','M','X','J','V','S','D']; // empieza en lunes
 // defecto (fin de semana / festivo ITM = negro; resto = verde).
 let diasOverride = {};
 
+// diasParcial[iso] = 'HH:MM' — suspensión PARCIAL (ej. día de calor): ese día SÍ
+// se trabaja, pero solo hasta la hora indicada. Los bloques de horario que
+// empiezan a esa hora o después NO cuentan (no hay falta ni retardo); los que
+// empiezan antes siguen contando normal. Si un docente solo tiene clase en la
+// mañana y no vino, se le sigue contando la falta.
+let diasParcial = {};
+
 // ═══════════════════════════════════════════════════════════════════════════
 // PERSISTENCIA LOCAL — periodo y el calendario marcado a mano sobreviven a
 // recargar la página o cerrar el navegador (localStorage del dispositivo).
 // ═══════════════════════════════════════════════════════════════════════════
 const LS_KEY_OVERRIDE = 'itmAsist_diasOverride';
+const LS_KEY_PARCIAL = 'itmAsist_diasParcial';
 const LS_KEY_PERIODO_INI = 'itmAsist_periodoInicio';
 const LS_KEY_PERIODO_FIN = 'itmAsist_periodoFin';
 
 function guardarOverrideLS(){
-  try{ localStorage.setItem(LS_KEY_OVERRIDE, JSON.stringify(diasOverride)); }catch(e){}
+  try{
+    localStorage.setItem(LS_KEY_OVERRIDE, JSON.stringify(diasOverride));
+    localStorage.setItem(LS_KEY_PARCIAL, JSON.stringify(diasParcial));
+  }catch(e){}
 }
 
 function cargarOverrideLS(){
   try{
     const raw = localStorage.getItem(LS_KEY_OVERRIDE);
     if(raw){ const obj = JSON.parse(raw); if(obj && typeof obj==='object') diasOverride = obj; }
+    const rawP = localStorage.getItem(LS_KEY_PARCIAL);
+    if(rawP){ const obj = JSON.parse(rawP); if(obj && typeof obj==='object') diasParcial = obj; }
   }catch(e){ /* ignorar si el navegador bloquea localStorage */ }
 }
 
@@ -105,8 +118,20 @@ function reglaBaseTrabaja(iso, dow){
 
 /** true = verde (se trabaja, cuenta falta si no hay checada) · false = negro (no se trabaja) */
 function trabajaDia(iso, dow){
+  // Suspensión parcial: el día se trabaja (hasta la hora de corte)
+  if(Object.prototype.hasOwnProperty.call(diasParcial, iso)) return true;
   if(Object.prototype.hasOwnProperty.call(diasOverride, iso)) return diasOverride[iso];
   return reglaBaseTrabaja(iso, dow);
+}
+
+/** Hora de corte de una suspensión parcial, en minutos desde medianoche (ej. 13:00 → 780).
+ *  Devuelve null si ese día no tiene suspensión parcial. Recibe la fecha en formato 'AAAA-MM-DD'. */
+function corteParcialMin(iso){
+  const c = diasParcial[iso];
+  if(!c) return null;
+  const [h, m] = c.split(':').map(Number);
+  if(isNaN(h) || isNaN(m)) return null;
+  return h*60 + m;
 }
 
 function esDiaHabil(d){
@@ -145,17 +170,38 @@ function mesesDelPeriodo(ini, fin){
   return meses;
 }
 
+/** Modo de clic elegido en el panel del calendario: 'alternar' (verde/negro) o 'parcial'. */
+function modoCalendario(){
+  return document.querySelector('input[name="calModo"]:checked')?.value || 'alternar';
+}
+
 function toggleDia(iso, dow){
+  if(modoCalendario()==='parcial'){
+    // Suspensión parcial: el día se trabaja solo hasta la hora de corte.
+    const corte = document.getElementById('calCorte')?.value;
+    if(!corte){ showAlert('Indica a partir de qué hora se suspende (ej. 13:00).', 'warning'); return; }
+    if(diasParcial[iso]===corte){
+      delete diasParcial[iso];          // mismo corte otra vez = quitar la marca
+    } else {
+      diasParcial[iso] = corte;
+    }
+    delete diasOverride[iso];           // la suspensión parcial reemplaza la marca verde/negro
+    guardarOverrideLS();
+    renderCalendario();
+    return;
+  }
   const actual = trabajaDia(iso, dow);
+  delete diasParcial[iso];              // un clic normal siempre sale de la suspensión parcial
   diasOverride[iso] = !actual;
   guardarOverrideLS();
   renderCalendario();
 }
 
 async function resetCalendario(){
-  if(Object.keys(diasOverride).length===0) return;
-  if(!(await showConfirm('¿Restablecer el calendario a los días festivos/fines de semana por defecto?\nSe perderán tus marcas manuales.'))) return;
+  if(Object.keys(diasOverride).length===0 && Object.keys(diasParcial).length===0) return;
+  if(!(await showConfirm('¿Restablecer el calendario a los días festivos/fines de semana por defecto?\nSe perderán tus marcas manuales (incluidas las suspensiones parciales).'))) return;
   diasOverride = {};
+  diasParcial = {};
   guardarOverrideLS();
   renderCalendario();
 }
@@ -215,11 +261,13 @@ function renderCalendario(){
       const celda = document.createElement('span');
       celda.textContent = dia;
       const trabaja = trabajaDia(iso, dow);
-      const esOverride = Object.prototype.hasOwnProperty.call(diasOverride, iso);
+      const corte = diasParcial[iso];
+      const esOverride = Object.prototype.hasOwnProperty.call(diasOverride, iso) || !!corte;
       if(esOverride) nCambios++;
 
-      celda.className = 'cal-day ' + (trabaja ? 'cal-day-on' : 'cal-day-off') + (dentroPeriodo?'':' cal-day-fuera') + (esOverride?' cal-day-marcado':'');
-      let tip = trabaja ? 'Se trabaja' : 'No se trabaja';
+      const claseColor = corte ? 'cal-day-parcial' : (trabaja ? 'cal-day-on' : 'cal-day-off');
+      celda.className = 'cal-day ' + claseColor + (dentroPeriodo?'':' cal-day-fuera') + (esOverride?' cal-day-marcado':'');
+      let tip = corte ? `Suspensión parcial: se trabaja hasta las ${corte}` : (trabaja ? 'Se trabaja' : 'No se trabaja');
       if(FESTIVOS_LABELS[iso]) tip += ` — ${FESTIVOS_LABELS[iso]}`;
       if(!dentroPeriodo) tip += ' (fuera del periodo)';
       tip += ' · clic para cambiar';

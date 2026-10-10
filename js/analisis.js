@@ -1,6 +1,25 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // ANÁLISIS PRINCIPAL — detecta faltas, retardos y omisiones
 // ═══════════════════════════════════════════════════════════════════════════
+/** "08:30" → 510 (minutos desde medianoche) */
+function hmAMin(hs){ const [h,m]=hs.split(':').map(Number); return h*60+m; }
+
+/**
+ * Bloques de horario que le tocan a un docente en cierto día de la semana (0=dom … 6=sáb).
+ * Devuelve null si ese día es libre para él (horario por día con "Libre" marcado).
+ */
+function bloquesDeProfesor(p, dow){
+  if(p.horarioVariable){
+    const hv = p.horarioVariable[dow];
+    if(hv?.libre) return null;
+    if(hv?.bloques) return hv.bloques;
+    // compatibilidad con formato antiguo (entrada/salida directo)
+    if(hv?.entrada) return [{entrada:hv.entrada,salida:hv.salida}];
+  }
+  // Sin horario por día: un solo bloque con el horario global
+  return [{entrada:p.horaEntrada,salida:p.horaSalida}];
+}
+
 function analizar(){
   logMsg('logAnalisis','Obteniendo días hábiles del periodo...','ok');
   const diasHabiles = getDiasHabilesPeriodo();
@@ -29,6 +48,17 @@ function analizar(){
         if(p.horarioVariable[dow]?.libre) continue;
       }
       if(porDia[dk]) continue;
+      // Suspensión parcial (ej. calor): si TODOS los bloques del docente ese día empiezan
+      // a la hora de corte o después, no se le cuenta falta. Si tiene algún bloque
+      // antes del corte (ej. solo da clase en la mañana), la falta se cuenta normal.
+      const corteDia = corteParcialMin(dk);
+      if(corteDia!==null){
+        const bl = bloquesDeProfesor(p, new Date(dk+'T12:00:00').getDay());
+        if(bl && !bl.some(b=>hmAMin(b.entrada)<corteDia)){
+          logMsg('logAnalisis',`  ${no} ${fmtDia(new Date(dk+'T12:00:00'))}: suspensión parcial, sin horario antes del corte`,'skip');
+          continue;
+        }
+      }
       if(estaJustificado(no, new Date(dk+'T12:00:00'))) continue;
       const dFalta = new Date(dk+'T00:00:00');
       incidencias.push({fecha:dFalta,tipos:['FALTA'],refs:[],esAusencia:true});
@@ -45,27 +75,29 @@ function analizar(){
         continue;
       }
 
-      // Determinar bloques del día
-      let bloquesDia = null;
-      if(p.horarioVariable){
-        const dow = primera.getDay();
-        const hv = p.horarioVariable[dow];
-        if(hv?.libre) continue;
-        if(hv?.bloques) bloquesDia = hv.bloques;
-        // compatibilidad con formato antiguo (entrada/salida directo)
-        else if(hv?.entrada) bloquesDia = [{entrada:hv.entrada,salida:hv.salida}];
+      // Determinar bloques del día (null = día libre del docente)
+      let bloquesDia = bloquesDeProfesor(p, primera.getDay());
+      if(!bloquesDia) continue;
+      const etiquetarBloque = bloquesDia.length>1;
+
+      // Suspensión parcial: los bloques que empiezan a la hora de corte o después no cuentan
+      // (sin falta de bloque ni retardo). Si ya no queda ningún bloque, no hay nada que revisar.
+      const corteDia = corteParcialMin(dk);
+      if(corteDia!==null){
+        bloquesDia = bloquesDia.filter(b=>hmAMin(b.entrada)<corteDia);
+        if(bloquesDia.length===0){
+          logMsg('logAnalisis',`  ${no} ${fmtDia(primera)}: suspensión parcial, sin horario antes del corte`,'skip');
+          continue;
+        }
       }
-      // Si no hay horario variable, un solo bloque con el horario global
-      if(!bloquesDia) bloquesDia = [{entrada:p.horaEntrada,salida:p.horaSalida}];
 
       // Asignar cada checada al bloque más cercano
-      function parsHM(hs){ const [h,m]=hs.split(':').map(Number); return h*60+m; }
       function checadaMin(c){ return c.getHours()*60+c.getMinutes(); }
 
       // Para cada bloque: calcular minuto inicio y fin
       const bloquesInfo = bloquesDia.map(b=>({
-        entradaMin: parsHM(b.entrada),
-        salidaMin: parsHM(b.salida),
+        entradaMin: hmAMin(b.entrada),
+        salidaMin: hmAMin(b.salida),
         entrada: b.entrada,
         salida: b.salida,
         checadas: []
@@ -120,13 +152,16 @@ function analizar(){
           if(mins>10 && mins<=20){ tipos.push('RETARDO_MENOR'); refs.push(fmtFecha(bPrimera)); }
           else if(mins>20 && mins<=30){ tipos.push('RETARDO_MAYOR'); refs.push(fmtFecha(bPrimera)); }
           else if(mins>30){ tipos.push('FALTA'); refs.push(fmtFecha(bPrimera)); }
-          if(!tieneSalida){
+          // En suspensión parcial, si el bloque termina después del corte no se exige la
+          // checada de salida (el docente pudo retirarse por la suspensión).
+          const salidaExigida = !(corteDia!==null && b.salidaMin>corteDia);
+          if(!tieneSalida && salidaExigida){
             tipos.push('OMISION_SALIDA');
             if(!refs.length) refs.push(fmtFecha(bPrimera));
           }
         }
         if(tipos.length>0){
-          const bloqueLabel = bloquesDia.length>1 ? ` [${b.entrada}–${b.salida}]` : '';
+          const bloqueLabel = etiquetarBloque ? ` [${b.entrada}–${b.salida}]` : '';
           incidencias.push({fecha:bPrimera,tipos,refs,esAusencia:false,bloqueLabel});
         }
       }

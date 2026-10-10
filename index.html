@@ -76,7 +76,14 @@
         <div class="cal-legend">
           <span><i class="cal-swatch cal-swatch-on"></i> Se trabaja</span>
           <span><i class="cal-swatch cal-swatch-off"></i> No se trabaja</span>
+          <span><i class="cal-swatch cal-swatch-parcial"></i> Suspensión parcial (se trabaja hasta la hora indicada)</span>
           <span><i class="cal-swatch cal-swatch-marcado"></i> Modificado a mano</span>
+        </div>
+        <div class="cal-modo">
+          <span class="cal-modo-titulo">Al dar clic en un día:</span>
+          <label><input type="radio" name="calModo" value="alternar" checked/> Alternar se trabaja / no se trabaja</label>
+          <label><input type="radio" name="calModo" value="parcial"/> Suspensión parcial desde las <input type="time" id="calCorte" value="13:00"/></label>
+          <span class="cal-modo-ayuda">Suspensión parcial: ese día se trabaja hasta la hora indicada. Quien solo tenga clase antes de esa hora y no venga, lleva falta; quien entre a esa hora o después, no. Vuelve a dar clic en el mismo día para quitarla.</span>
         </div>
         <div class="cal-calendar" id="calCalendar"></div>
         <div class="custom-row">
